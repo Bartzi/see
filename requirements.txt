@@ -1,0 +1,10 @@
+chainer >= 1.17.0
+editdistance >= 0.3.1
+Flask >= 0.11.1
+graphviz >= 0.4.10
+h5py >= 2.6.0
+matplotlib >= 1.5.2
+numpy >= 1.11.2
+Pillow >= 3.3.1
+scikit-image >= 0.12.3
+scipy >= 0.18.0
