@@ -13,21 +13,12 @@ from chainer.training import extensions
 
 from commands.interactive_train import open_interactive_prompt
 from datasets.file_dataset import FileBasedDataset
-from datasets.sub_dataset import split_dataset_random, split_dataset, split_dataset_n_random
-from insights.bbox_plotter import BBOXPlotter
-from insights.fsns_bbox_plotter import FSNSBBOXPlotter
+from datasets.sub_dataset import split_dataset, split_dataset_n_random
 from insights.svhn_bbox_plotter import SVHNBBoxPlotter
-from metrics.ctc_metrics import CTCMetrics
-from metrics.lstm_per_step_metrics import PerStepLSTMMetric
-from metrics.softmax_metrics import SoftmaxMetrics
-from metrics.svhn_ctc_metrics import SVHNCTCMetrics
-from metrics.svhn_softmax_metrics import SVHNSoftmaxMetrics
-from metrics.textrec_metrics import TextRectMetrics, TextRecSoftmaxMetrics
-from models.svhn import SVHNLocalizationNet, SVHNRecognitionNet, SVHNNet, SVHNCTCRecognitionNet
-from optimizers.multi_net_optimizer import MultiNetOptimizer
+from metrics.textrec_metrics import TextRecSoftmaxMetrics
+from models.svhn import SVHNLocalizationNet, SVHNRecognitionNet, SVHNNet
 from utils.baby_step_curriculum import BabyStepCurriculum
 from utils.datatypes import Size
-from utils.intelligent_attribute_shifter import IntelligentAttributeShifter
 from utils.multi_accuracy_classifier import Classifier
 from utils.train_utils import add_default_arguments, get_fast_evaluator, get_trainer, \
     concat_and_pad_examples
@@ -132,20 +123,12 @@ if __name__ == "__main__":
                 else:
                     chainer.serializers.NpzDeserializer(f).load(net)
 
-    # base_optimizer = chainer.optimizers.MomentumSGD(lr=args.learning_rate)
-    base_optimizer = chainer.optimizers.Adam(alpha=args.learning_rate)
-    # lr_shifter = (IntelligentAttributeShifter(0.1, trigger=(1, 'iteration')), (1, 'iteration'))
-    # optimizer = chainer.optimizers.RMSpropGraves()
-    # base_optimizer = chainer.optimizers.RMSprop(lr=args.learning_rate)
-    # optimizer = chainer.optimizers.AdaDelta(rho=0.9)
-    # optimizer = MultiNetOptimizer(base_optimizer, optimize_all_interval=args.optimize_all_interval)
-    optimizer = base_optimizer
-    # optimizer.setup(model, extra_links=[localization_net])
+    optimizer = chainer.optimizers.Adam(alpha=args.learning_rate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0005))
-    # optimizer.add_hook(chainer.optimizer.GradientClipping(2))
+    optimizer.add_hook(chainer.optimizer.GradientClipping(2))
 
-    # freeze localization net
+    # freeze localization net if user wants to do that
     if args.freeze_localization:
         localization_net.disable_update()
 
@@ -160,7 +143,6 @@ if __name__ == "__main__":
     train_iterators = [chainer.iterators.MultiprocessIterator(dataset, args.batch_size) for dataset in gpu_datasets]
     validation_iterator = chainer.iterators.MultiprocessIterator(validation_dataset, args.batch_size)
 
-    # updater = chainer.training.StandardUpdater(train_iterator, optimizer, device=args.gpu)
     updater = MultiprocessParallelUpdater(train_iterators, optimizer, devices=args.gpus)
 
     log_dir = os.path.join(args.log_dir, "{}_{}".format(datetime.datetime.now().isoformat(), args.log_name))
@@ -215,17 +197,17 @@ if __name__ == "__main__":
         ),
         (args.test_interval, 'iteration')
     )
-    # epoch_validation_iterator = copy.copy(validation_iterator)
-    # epoch_validation_iterator._repeat = False
-    # epoch_evaluator = (
-    #     chainer.training.extensions.Evaluator(
-    #         epoch_validation_iterator,
-    #         model,
-    #         device=updater._devices[0],
-    #         converter=concat_and_pad_examples,
-    #     ),
-    #     (1, 'epoch')
-    # )
+    epoch_validation_iterator = copy.copy(validation_iterator)
+    epoch_validation_iterator._repeat = False
+    epoch_evaluator = (
+        chainer.training.extensions.Evaluator(
+            epoch_validation_iterator,
+            model,
+            device=updater._devices[0],
+            converter=concat_and_pad_examples,
+        ),
+        (1, 'epoch')
+    )
 
     model_snapshotter = (
         extensions.snapshot_object(net, 'model_{.updater.iteration}.npz'), (args.snapshot_interval, 'iteration'))
@@ -244,7 +226,6 @@ if __name__ == "__main__":
         send_bboxes=args.send_bboxes,
         upstream_port=args.port,
         visualization_anchors=[["localization_net", "vis_anchor"], ["recognition_net", "vis_anchor"]]
-        # visualization_anchors=[["localization_vis_anchor"], ["recognition_vis_anchor"]]
     ), (1, 'iteration'))
 
     trainer = get_trainer(
