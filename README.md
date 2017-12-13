@@ -85,14 +85,93 @@ The script is tuned to use the custom datasets and should enable you to redo the
 The training can be run on GPU or CPU. You can also use multiple GPUs in a data parallel fashion.
 In order to specify which GPU to use just add the command line parameter `-g <id of gpu to use>` e.g. `-g 0` for using the first GPU.
 
-You can get a brief explanation of each command line option of the script `train_svn.py` by running
+You can get a brief explanation of each command line option of the script `train_svhn.py` by running
 the script like this: `python train_svhn.py -h`
 
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
 - `log_dir` - this is the path to directory where the logs shall be saved
 
-### Results of training
+# FSNS Experiments
+
+In order to see, whether our idea is applicable in practice, we also
+did experiments on the FSNS dataset. The FSNS dataset contains
+images of French street name signs. The most notable characteristic of this
+dataset is, that this dataset does not contain any annotation for text
+localization. This fact makes this dataset quite suitable for our method,
+as we claim that we can locate and recognize text, even without the corresponding
+ground truth for localization.
+
+## Preparing the Dataset
+
+Getting the dataset and making it usable with deep learning frameworks
+like Chainer is not an easy task. We provide some scripts that will download
+the dataset, convert it from the tensorflow format to single images and
+create a ground truth file, that is usable by our train code.
+
+The folder `datasets/fsns` contains all scripts that are necessary for preparing
+the dataset. These steps need to be done:
+
+1. use the script `download_fsns.py` for getting the dataset.
+You will need to specify a directory, where the data shall be saved.
+2. the script `tfrecord_to_image.py` extracts all images and labels from
+the downloaded dataset.
+3. next, you will need to transform the original ground truth, to the ground truth
+format we used for training. Our ground truth format differs, because we
+found that it is not possible to train the model, if the word boundaries are not
+explicitly given to the model. We therefore transform the line based ground truth
+to a word based ground truth. You can use the script `transform_gt.py` for doing that.
+You could call the script like that:
+`python transform_gt.py <path to original gt> fsns_char_map.json <path to new gt>`.
+4. Because of legacy reasons we advice you to use the script `swap_classes.py`.
+With this script we will set the class of the blank label to be `0`, as it is defined in
+the class to label map `fsns_char_map.json`. You can invoke the script like this:
+`python swap_classes.py <gt_file> <output_file_name> 0 133`
+
+## Training the Network
+
+Before you can start training the network, you will need to do the following preparations:
+
+In the last section we already introduced the `transform_gt.py` script.
+As we found that it is only possible to train a new model on the FSNS dataset,
+when using a curriculum learning strategy, we need to create a learn curriculum
+prior to starting the training. You can do this by following these steps:
+
+1. create ground truth files for each step of the curriculum with the `transform_gt.py`
+script.
+    1. start with a reasonable number of maximum words (2 is a good choice here)
+    2. create a ground truth file with all images that contain max. 2 words by using the `transform_gt.py`
+    script: `python transform_gt.py <path to downloaded gt> fsns_char_map.json <path to 2 word gt> --max-words 2`
+    3. Repeat this step with 3 and 4 words (you can also take 5 and 6, too), but make sure
+    to only include images with the corresponding amount of words (`--min-words` is the flag to use)
+2. After you have created all curriculum ground truth files, you will need to add the following line to
+the top of each file: `<number of words>    <maximum number of characters per word>` (please note: both values are separated by a tab character).
+You'll have to add the following line to the file containing all images with a maximum of two words:
+`2 21` (that is two words and a maximum of 21 characters per word, which is the default setting).
+Yes this could also be automated, but it isn't (PRs are welcome :wink:)
+3. Add the path to your files to a `.json` file tht could be called `curriculum.json`
+This file works exactly the same as the file discussed in step 3 in the preparations section
+for the SVHN experiments.
+
+Once you are done with this, you can actually train the network :tada:
+
+Training the network happens, by using the `train_fsns.py` script.
+`python train_fsns.py -h` shows all command-line options.
+This script works very similar to the `train_svhn.py` script
+
+You will need to specify at least the following parameters:
+- `dataset_specification` - this is the path to the `json` file you just created
+- `log_dir` - this is the path to directory where the logs shall be saved
+
+
+# General Notes on Training
+
+This section contains information about things that happen while a network is training.
+It includes a description of all data that is being logged and backed up for each train run
+and a description of a tool that can be used to inspect the training, while
+it is running.
+
+## Contents of the log dir
 
 The code will create a new subdirectory in the log dir, where it puts all
 data that is to be logged. The code logs the following pieces of data:
@@ -103,9 +182,59 @@ data that is to be logged. The code logs the following pieces of data:
 helps with assessing, whether the network is converging or not. It also enables you to inspect the train progress
 while the network is training.
 
-# FSNS Experiments
+## Inspecting the train progress
+
+If you leave the default settings, you can inspect the progress of the
+training in real time, by using the script `show_progress.py`. This script
+is located in the folder `utils`. You can get all supported command line arguments
+with this command: `python show_progress.py -h`. Normally you will want to start
+the program like this: `python show_progress.py`. It will open a TK window.
+In case the program complains that it is not able to find TK related libraries,
+you will need to install them.
+
+## Creating an animation of plotted train steps
+
+The training script contains a little helper that applies the current
+state of the model to an image and saves the result of this application
+for each iteration (or the way you configure it).
+
+You can use the script `create_video.py` to create an animation out of these images.
+In order to use the script, you will need to install ffmpeg (and have the `ffmpeg` command in your path)
+and you will need to install imagemagick (and have the `convert` command in your path).
+You can then create a video with this command line call:
+`python create_video.py <path to directory with images> <path to destination video>`.
+You can learn about further command line arguments with `python create_video.py -h`.
+
+# Evaluation
+
+You can evaluate all models (svhn/fsns) with the script `evaluate.py` in the `chainer` directory.
+
+## Usage
+
+You will need a directory containing the following items:
+- log_file of the training
+- saved model
+- network definition files that have been backed up by the train script
+
+### Evaluating a SVHN model
+
+In order to evaluate a SVHN model, you will need to invoke the script like that:
+`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. svhn_char_map.json)> --target-shape <input shape for recogntion net (e.g. 50,50)>`
+
+### Evaluating a FSNS model
+
+In order to evaluate a FSNS model, you will need to invoke the script like that:
+`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. fsns_char_map.json)>`
 
 
+# Citation
 
+If you find this code useful, please cite our paper:
 
+    Bibtex
+
+# Notes
+
+If there is anything totally unclear, or not working, please feel free to file an issue.
+If you did anything with the code, feel free to file a PR.
 
