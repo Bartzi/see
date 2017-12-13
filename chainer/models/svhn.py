@@ -122,7 +122,7 @@ class SVHNRecognitionNet(Chain):
             softmax = F.reshape(softmax, (self.num_timesteps, -1, self.label_size))
             overall_predictions.append(softmax)
 
-        return overall_predictions, rois, points
+        return F.concat(overall_predictions, axis=0), rois, points
 
 
 class SVHNCTCRecognitionNet(Chain):
@@ -177,7 +177,7 @@ class SVHNCTCRecognitionNet(Chain):
                 lstm_predictions.append(classified)
             overall_predictions.append(lstm_predictions)
 
-        return overall_predictions, rois, points
+        return F.concat(overall_predictions, axis=0), rois, points
 
 
 class SVHNNet(Chain):

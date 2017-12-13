@@ -5,7 +5,7 @@ Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scen
 # Installation
 
 1. Make sure to use Python 3
-2. It is a good idea to create a virtual environment [example for creating a venv](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+2. It is a good idea to create a virtual environment ([example for creating a venv](http://docs.python-guide.org/en/latest/dev/virtualenvs/))
 3. Make sure you have the latest version of [CUDA](https://developer.nvidia.com/cuda-zone) (>= 8.0) installed
 4. Install [CUDNN](https://developer.nvidia.com/cudnn) (> 6.0)
 5. Install [NCCL](https://developer.nvidia.com/cudnn) (> 2.0)
@@ -36,7 +36,7 @@ The information on how to create the datasets is included here for reference.
 
 ### Original SVHN data
 1. Get the original SVHN datset from [here](http://ufldl.stanford.edu/housenumbers/).
-2. Extract the label data using the script `datasets/svn/svhn_Dataextract_to_json.py`.
+2. Extract the label data using the script `datasets/svn/svhn_dataextract_to_json.py`.
 3. use the script `datasets/svhn/prepare_svhn_crops.py` to crop all bounding boxes,
 including some background from the SVHN images. Use the script like that:
 `python prepare_svhn_crops.py <path to svhn json> 64 <where to save the cropped images> <name of stage>`.
@@ -65,8 +65,10 @@ The script is tuned to use the custom datasets and should enable you to redo the
 
 1. Make sure that you have one of the datasets.
 2. For training you will need:
-    1. the file `svhn_char_map.json`
+    1. the file `svhn_char_map.json` (you can find it in the folder `datasets/svhn`)
     2. the ground truth files of the dataset you want to use
+3. Add one line to the beginning of each ground truth file: `<number of house numbers in image> <max number of chars per house number>`
+(both values need to be separated by a tab character). If you are using the grid dataset it could look like that: `4    4`.
 3. prepare the curriculum specification as a `json` file, by following this template:
     ```
     [
@@ -91,6 +93,8 @@ the script like this: `python train_svhn.py -h`
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
 - `log_dir` - this is the path to directory where the logs shall be saved
+- `--char-map ../datasets/svhn/svhn_char_map.json` - path to the char map for mapping classes to labels.
+- `--blank-label 0` - indicates that class 0 is the blank label
 
 # FSNS Experiments
 
@@ -162,6 +166,8 @@ This script works very similar to the `train_svhn.py` script
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
 - `log_dir` - this is the path to directory where the logs shall be saved
+- `--char-map ../datasets/fsns/fsns_char_map.json` - path to the char map for mapping classes to labels.
+- `--blank-label 0` - indicates that class 0 is the blank label
 
 
 # General Notes on Training
