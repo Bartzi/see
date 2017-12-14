@@ -236,7 +236,12 @@ In order to evaluate a FSNS model, you will need to invoke the script like that:
 
 If you find this code useful, please cite our paper:
 
-    Bibtex
+    @article{bartz2017see,
+        title={SEE: Towards Semi-Supervised End-to-End Scene Text Recognition},
+        author={Bartz, Christian and Yang, Haojin and Meinel, Christoph},
+        journal={arXiv preprint arXiv:TODO},
+        year={2017}
+    }
 
 # Notes
 
