@@ -167,6 +167,12 @@ You will need to specify at least the following parameters:
 - `-b <batch-size>` - set the batch size used for training
 
 
+# Pretrained Models
+
+You can download our best performing model on the FSNS dataset and a model
+for our SVHN experiments [here](https://bartzi.de/research/see).
+
+
 # General Notes on Training
 
 This section contains information about things that happen while a network is training.
