@@ -15,7 +15,7 @@ from commands.interactive_train import open_interactive_prompt
 from datasets.file_dataset import FileBasedDataset
 from datasets.sub_dataset import split_dataset, split_dataset_n_random
 from insights.svhn_bbox_plotter import SVHNBBoxPlotter
-from metrics.textrec_metrics import TextRecSoftmaxMetrics
+from metrics.svhn_softmax_metrics import SVHNSoftmaxMetrics
 from models.svhn import SVHNLocalizationNet, SVHNRecognitionNet, SVHNNet
 from utils.baby_step_curriculum import BabyStepCurriculum
 from utils.datatypes import Size
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     train_dataset.resize_size = image_size
     validation_dataset.resize_size = image_size
 
-    metrics = TextRecSoftmaxMetrics(
+    metrics = SVHNSoftmaxMetrics(
         args.blank_label,
         args.char_map,
         train_dataset.num_timesteps,

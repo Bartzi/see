@@ -1,5 +1,3 @@
-import chainer
-from chainer import configuration
 from chainer import Chain
 from chainer import cuda
 
@@ -9,7 +7,6 @@ from functions.disable_shearing import disable_shearing
 from functions.disable_translation import disable_translation
 from functions.rotation_droput import rotation_dropout
 from insights.visual_backprop import VisualBackprop
-from links.conv_lstm import ConvLSTM
 
 
 class ResnetBlock(Chain):

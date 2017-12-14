@@ -18,7 +18,6 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", type=int, default=-1, help="gpu to use [default: use cpu]")
     parser.add_argument("--save-rois", action='store_true', default=False, help="save rois of each image for further inspection")
     parser.add_argument("--num-rois", type=int, default=1000, help="number of rois to save [default: 1000]")
-    parser.add_argument('--is-original-fsns', action='store_true', default=False, help='model was trained on FSNS')
     parser.add_argument('--log-name', default='log', help='name of the log file [default: log]')
 
     fsns_parser = subparsers.add_parser("fsns", help="evaluate fsns model")
@@ -28,6 +27,7 @@ if __name__ == "__main__":
     svhn_parser.set_defaults(evaluator=SVHNEvaluator)
 
     args = parser.parse_args()
+    args.is_original_fsns = True
 
     evaluator = args.evaluator(args)
     evaluator.evaluate()

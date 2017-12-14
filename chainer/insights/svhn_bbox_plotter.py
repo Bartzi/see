@@ -9,7 +9,6 @@ class SVHNBBoxPlotter(BBOXPlotter):
 
     def decode_predictions(self, predictions):
         # concat all individual predictions and slice for each time step
-        predictions = F.split_axis(predictions, 4, 0)
         predictions = F.concat([F.expand_dims(p, axis=2) for p in predictions], axis=2)
 
         words = []

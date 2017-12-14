@@ -50,7 +50,7 @@ class SVHNLocalizationNet(Chain):
         h = self.rs3(h)
         # h = self.rs4(h)
         self.vis_anchor = h
-        h = F.average_pooling_2d(h, 5)
+        h = F.average_pooling_2d(h, 5, stride=2)
 
         localizations = []
 
@@ -67,7 +67,7 @@ class SVHNLocalizationNet(Chain):
 
 class SVHNRecognitionNet(Chain):
 
-    def __init__(self, target_shape, num_labels, num_timesteps, use_blstm=False, label_size=11):
+    def __init__(self, target_shape, num_labels, num_timesteps, use_blstm=False):
         super(SVHNRecognitionNet, self).__init__()
         with self.init_scope():
             self.data_bn = L.BatchNormalization(3)
@@ -79,23 +79,17 @@ class SVHNRecognitionNet(Chain):
             self.rs2 = ResnetBlock(64, filter_increase=True)
             self.rs3 = ResnetBlock(128, filter_increase=True)
             self.fc1 = L.Linear(None, 256)
-            # self.lstm = L.LSTM(None, 256)
-            # if use_blstm:
-            #     self.blstm = L.LSTM(None, 256)
-            self.classifiers = [L.Linear(None, label_size) for _ in range(num_labels)]
+            self.lstm = L.LSTM(None, 256)
+            if use_blstm:
+                self.blstm = L.LSTM(None, 256)
+            self.classifier = L.Linear(None, 11)
 
         self._train = True
         self.target_shape = target_shape
         self.num_labels = num_labels
         self.num_timesteps = num_timesteps
-        self.label_size = label_size
         self.vis_anchor = None
         self.use_blstm = use_blstm
-
-    def to_gpu(self, device=None):
-        super().to_gpu(device=device)
-        for classifier in self.classifiers:
-            classifier.to_gpu(device=device)
 
     def __call__(self, images, localizations):
         points = F.spatial_transformer_grid(localizations, self.target_shape)
@@ -116,18 +110,40 @@ class SVHNRecognitionNet(Chain):
         h = F.relu(self.fc1(h))
 
         # for each timestep of the localization net do the 'classification'
+        h = F.reshape(h, (self.num_timesteps, -1, self.fc1.out_size))
         overall_predictions = []
-        for i in range(self.num_labels):
-            softmax = self.classifiers[i](h)
-            softmax = F.reshape(softmax, (self.num_timesteps, -1, self.label_size))
-            overall_predictions.append(softmax)
+        for timestep in F.separate(h, axis=0):
+            lstm_predictions = []
+            self.lstm.reset_state()
+            if self.use_blstm:
+                self.blstm.reset_state()
 
-        return F.concat(overall_predictions, axis=0), rois, points
+            for _ in range(self.num_labels):
+                lstm_prediction = self.lstm(timestep)
+                lstm_predictions.append(lstm_prediction)
+
+            if self.use_blstm:
+                blstm_predictions = []
+                for lstm_prediction in reversed(lstm_predictions):
+                    blstm_prediction = self.blstm(lstm_prediction)
+                    blstm_predictions.append(blstm_prediction)
+
+                lstm_predictions = reversed(blstm_predictions)
+
+            final_lstm_predictions = []
+            for lstm_prediction in lstm_predictions:
+                classified = self.classifier(lstm_prediction)
+                final_lstm_predictions.append(F.expand_dims(classified, axis=0))
+
+            final_lstm_predictions = F.concat(final_lstm_predictions, axis=0)
+            overall_predictions.append(final_lstm_predictions)
+
+        return overall_predictions, rois, points
 
 
 class SVHNCTCRecognitionNet(Chain):
 
-    def __init__(self, target_shape, num_labels, num_timesteps, label_size=11):
+    def __init__(self, target_shape, num_labels, num_timesteps):
         super(SVHNCTCRecognitionNet, self).__init__()
         with self.init_scope():
             self.data_bn = L.BatchNormalization(3)
@@ -138,7 +154,7 @@ class SVHNCTCRecognitionNet(Chain):
             self.rs3 = ResnetBlock(128, filter_increase=True)
             self.fc1 = L.Linear(None, 256)
             self.lstm = L.LSTM(None, 256)
-            self.classifier = L.Linear(None, label_size)
+            self.classifier = L.Linear(None, 11)
 
         self._train = True
         self.target_shape = target_shape
@@ -165,7 +181,7 @@ class SVHNCTCRecognitionNet(Chain):
         h = F.relu(self.fc1(h))
 
         # for each timestep of the localization net do the 'classification'
-        h = F.reshape(h, (self.num_timesteps, -1, self.fc1.out_size))
+        h = F.reshape(h, (self.num_timesteps * 2 + 1, -1, self.fc1.out_size))
         overall_predictions = []
         for timestep in F.separate(h, axis=0):
             # go 2x num_labels plus 1 timesteps because of ctc loss
@@ -177,7 +193,7 @@ class SVHNCTCRecognitionNet(Chain):
                 lstm_predictions.append(classified)
             overall_predictions.append(lstm_predictions)
 
-        return F.concat(overall_predictions, axis=0), rois, points
+        return overall_predictions, rois, points
 
 
 class SVHNNet(Chain):

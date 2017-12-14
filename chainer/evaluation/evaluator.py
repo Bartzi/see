@@ -250,28 +250,6 @@ class SVHNEvaluator(Evaluator):
     def build_fusion_net(self, fusion_net_class, localization_net, recognition_net):
         return fusion_net_class(localization_net, recognition_net)
 
-    # def calc_accuracy(self, predictions, labels):
-    #     batch_predictions = predictions
-    #     batch_predictions = batch_predictions[0]
-    #
-    #     with cuda.get_device_from_array(batch_predictions.data):
-    #         classification = F.softmax(batch_predictions, axis=2)
-    #         classification = classification.data
-    #         classification = self.xp.argmax(classification, axis=2)
-    #         classification = self.xp.transpose(classification, (1, 0))
-    #
-    #         words = self.strip_prediction(classification)
-    #         labels = self.strip_prediction(labels)
-    #
-    #         for word, label in zip(words, labels):
-    #             word = "".join(map(self.label_to_char, word))
-    #             label = "".join(map(self.label_to_char, label))
-    #             if word == label:
-    #                 self.num_correct_words += 1
-    #             self.num_words += 1
-    #
-    #     return word, label
-
     def calc_accuracy(self, predictions, labels):
         batch_predictions = predictions
         # concat all individual predictions and slice for each time step
@@ -281,7 +259,7 @@ class SVHNEvaluator(Evaluator):
 
         accuracies = []
         with cuda.get_device_from_array(batch_predictions.data):
-            for prediction, label in zip(F.separate(batch_predictions, axis=0), F.separate(t, axis=1)):
+            for prediction, label in zip(F.separate(batch_predictions, axis=0), F.separate(t, axis=2)):
                 classification = F.softmax(prediction, axis=2)
                 classification = classification.data
                 classification = self.xp.argmax(classification, axis=2)

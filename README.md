@@ -95,6 +95,7 @@ You will need to specify at least the following parameters:
 - `log_dir` - this is the path to directory where the logs shall be saved
 - `--char-map ../datasets/svhn/svhn_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
+- `-b <batch-size>` - set the batch size used for training
 
 # FSNS Experiments
 
@@ -145,22 +146,17 @@ prior to starting the training. You can do this by following these steps:
 script.
     1. start with a reasonable number of maximum words (2 is a good choice here)
     2. create a ground truth file with all images that contain max. 2 words by using the `transform_gt.py`
-    script: `python transform_gt.py <path to downloaded gt> fsns_char_map.json <path to 2 word gt> --max-words 2`
+    script: `python transform_gt.py <path to downloaded gt> fsns_char_map.json <path to 2 word gt> --max-words 2 --blank-label 0`
     3. Repeat this step with 3 and 4 words (you can also take 5 and 6, too), but make sure
     to only include images with the corresponding amount of words (`--min-words` is the flag to use)
-2. After you have created all curriculum ground truth files, you will need to add the following line to
-the top of each file: `<number of words>    <maximum number of characters per word>` (please note: both values are separated by a tab character).
-You'll have to add the following line to the file containing all images with a maximum of two words:
-`2 21` (that is two words and a maximum of 21 characters per word, which is the default setting).
-Yes this could also be automated, but it isn't (PRs are welcome :wink:)
-3. Add the path to your files to a `.json` file tht could be called `curriculum.json`
+2. Add the path to your files to a `.json` file tht could be called `curriculum.json`
 This file works exactly the same as the file discussed in step 3 in the preparations section
 for the SVHN experiments.
 
 Once you are done with this, you can actually train the network :tada:
 
 Training the network happens, by using the `train_fsns.py` script.
-`python train_fsns.py -h` shows all command-line options.
+`python train_fsns.py -h` shows all available command-line options.
 This script works very similar to the `train_svhn.py` script
 
 You will need to specify at least the following parameters:
@@ -168,6 +164,7 @@ You will need to specify at least the following parameters:
 - `log_dir` - this is the path to directory where the logs shall be saved
 - `--char-map ../datasets/fsns/fsns_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
+- `-b <batch-size>` - set the batch size used for training
 
 
 # General Notes on Training
@@ -221,16 +218,18 @@ You will need a directory containing the following items:
 - log_file of the training
 - saved model
 - network definition files that have been backed up by the train script
+- set the gpu to use with `--gpu <id of gpu>`, the code does currently not work on CPU.
+- number of labels per timestep (typically max. 5 for SVHN and 21 for FSNS)
 
 ### Evaluating a SVHN model
 
 In order to evaluate a SVHN model, you will need to invoke the script like that:
-`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. svhn_char_map.json)> --target-shape <input shape for recogntion net (e.g. 50,50)>`
+`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. svhn_char_map.json)> --target-shape <input shape for recogntion net (e.g. 50,50)> <number of labels per timestep>`
 
 ### Evaluating a FSNS model
 
 In order to evaluate a FSNS model, you will need to invoke the script like that:
-`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. fsns_char_map.json)>`
+`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. fsns_char_map.json)> <number of labels per timestep>`
 
 
 # Citation
