@@ -1,5 +1,5 @@
 # SEE: Towards Semi-Supervised End-to-End Scene Text Recognition
-Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scene Text Recognition". You can read a preprint on [Arxiv](https://kekse)
+Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scene Text Recognition". You can read a preprint on [Arxiv](http://arxiv.org/abs/1712.05404)
 
 
 # Installation
@@ -245,7 +245,7 @@ If you find this code useful, please cite our paper:
     @article{bartz2017see,
         title={SEE: Towards Semi-Supervised End-to-End Scene Text Recognition},
         author={Bartz, Christian and Yang, Haojin and Meinel, Christoph},
-        journal={arXiv preprint arXiv:TODO},
+        journal={arXiv preprint arXiv:1712.05404},
         year={2017}
     }
 
