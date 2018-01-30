@@ -167,10 +167,58 @@ You will need to specify at least the following parameters:
 - `-b <batch-size>` - set the batch size used for training
 
 
+## FSNS Demo
+
+In case you only want to see how the model behaves on a given image, you can use the `fsns_demo.py` script.
+This script expects a trained model, an image and a char map an prints you the predicted words in the
+image + the predicted bounding boxes.
+If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
+`python fsns_demo.py <path to dataset directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
+It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
+and how they extract the characters from the predictions and you should be good to go!
+
+# Text Recognition
+
+Although not mentioned in the paper, we also provide a model with which, you can perform text recognition
+on already cropped text lines. We also provide code for training such a model.
+Everything works very similar to the scripts provided for SVHN and FSNS.
+
+## Dataset
+
+Unfortunately, we can not offer our entire train dataset for download, as it is way too huge.
+But if you want to train a text recognition model on your own, you can use the "Synthetic Word Dataset" (download it [here](http://www.robots.ox.ac.uk/~vgg/data/text/)).
+After you've downloaded the dataset, you will need to do some post processing and create
+a groundtruth similar to the one for the FSNS dataset. We provide a sample dataset at the location,
+where you can also download the text recognition model (which is [here](https://bartzi.de/research/see)).
+
+## Training
+After you are done with preparing the dataset, you can start training.
+
+Training the network happens, by using the `train_text_recognition.py` script.
+`python train_text_recognition.py -h` shows all available command-line options.
+This script works very similar to the `train_svhn.py` and `train_fsns.py` script
+
+You will need to specify at least the following parameters:
+- `dataset_specification` - this is the path to the `json` file you just created
+- `log_dir` - this is the path to directory where the logs shall be saved
+- `--char-map ../datasets/textrec/ctc_char_map.json` - path to the char map for mapping classes to labels.
+- `--blank-label 0` - indicates that class 0 is the blank label
+- `-b <batch-size>` - set the batch size used for training
+
+## Text Recognition Demo
+
+Analog to the `fsns_demo.py` script, we offer a demo script for text recognition named `text_recognition_demo.py`.
+This script expects a trained model, an image and a char map an prints you the predicted words in the
+image + the predicted bounding boxes.
+If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
+`python text_recognition_demo.py <path to dataset directory> model_190000.npz <path to example image> ../datasets/textrec/ctc_char_map.json`
+It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
+and how they extract the characters from the predictions and you should be good to go!
+
 # Pretrained Models
 
-You can download our best performing model on the FSNS dataset and a model
-for our SVHN experiments [here](https://bartzi.de/research/see).
+You can download our best performing model on the FSNS dataset, a model
+for our SVHN experiments and also a model for our text recognitin experiments [here](https://bartzi.de/research/see).
 
 
 # General Notes on Training
@@ -214,9 +262,10 @@ You can then create a video with this command line call:
 `python create_video.py <path to directory with images> <path to destination video>`.
 You can learn about further command line arguments with `python create_video.py -h`.
 
+
 # Evaluation
 
-You can evaluate all models (svhn/fsns) with the script `evaluate.py` in the `chainer` directory.
+You can evaluate all models (svhn/fsns/textrecognition) with the script `evaluate.py` in the `chainer` directory.
 
 ## Usage
 
@@ -235,17 +284,12 @@ In order to evaluate a SVHN model, you will need to invoke the script like that:
 ### Evaluating a FSNS model
 
 In order to evaluate a FSNS model, you will need to invoke the script like that:
-`python evaluate.py svhn <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. fsns_char_map.json)> <number of labels per timestep>`
+`python evaluate.py fsns <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. fsns_char_map.json)> <number of labels per timestep>`
 
-### FSNS Demo
+### Evaluating a Text Recognition model
 
-In case you only want to see how the model behaves on a given image, you can use the `fsns_demo.py` script.
-This script expects a trained model, an image and a char map an prints you the predicted words in the
-image + the predicted bounding boxes.
-If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
-`python fsns_demo.py <path to dataset directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
-It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
-and how they extract the characters from the predictions and you should be good to go!
+In order to evaluate a text recognition model, you will need to invoke the script like that:
+`python evaluate.py textrec <path to dir with specified items> <name of snapshot to evaluate> <path to ground truth file> <path to char map (e.g. ctc_char_map.json)> 23`
 
 
 # Citation
