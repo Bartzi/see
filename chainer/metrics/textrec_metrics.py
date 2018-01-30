@@ -15,6 +15,7 @@ class TextRectMetrics(LossMetrics):
 
         # reshape grids
         batch_size = t.shape[0]
+        grids = grids[-1]
         grid_shape = grids.shape
         grids = F.reshape(grids, (-1, batch_size) + grid_shape[1:])
 
@@ -27,6 +28,7 @@ class TextRectMetrics(LossMetrics):
 
     def calc_accuracy(self, x, t):
         batch_predictions, _, _ = x
+        batch_predictions = F.concat([F.expand_dims(prediction, axis=0) for prediction in batch_predictions], axis=0)
 
         self.xp = cuda.get_array_module(batch_predictions[0], t)
         accuracies = []
@@ -86,8 +88,9 @@ class TextRecCTCMetrics(TextRectMetrics):
 class TextRecSoftmaxMetrics(TextRectMetrics):
 
     def calc_actual_loss(self, predictions, grid, labels):
+        batch_size = labels.shape[0]
         labels = F.reshape(labels, (-1,))
 
-        predictions = F.transpose(predictions, (1, 0, 2))
-        predictions = F.reshape(predictions, (-1, predictions.shape[-1]))
+        predictions = F.concat([F.expand_dims(prediction, axis=1) for prediction in predictions], axis=1)
+        predictions = F.reshape(predictions, (batch_size * self.num_timesteps, -1))
         return F.softmax_cross_entropy(predictions, labels)
