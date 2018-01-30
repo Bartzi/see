@@ -1,6 +1,7 @@
 import csv
 import json
 import importlib
+import statistics
 from itertools import zip_longest
 
 import os
@@ -16,6 +17,9 @@ from PIL import Image
 from insights.bbox_plotter import BBOXPlotter
 from insights.fsns_bbox_plotter import FSNSBBOXPlotter
 from insights.svhn_bbox_plotter import SVHNBBoxPlotter
+from insights.text_rec_bbox_plotter import TextRecBBOXPlotter
+from metrics.softmax_metrics import SoftmaxMetrics
+from metrics.textrec_metrics import TextRecSoftmaxMetrics
 from utils.datatypes import Size
 
 
@@ -74,6 +78,8 @@ class Evaluator:
 
         self.model_dir = args.model_dir
 
+        self.metrics = self.create_metrics()
+
         self.save_rois = args.save_rois
         self.bbox_plotter = None
         if self.save_rois:
@@ -97,11 +103,10 @@ class Evaluator:
 
     def evaluate(self):
         results = []
-        with chainer.cuda.Device(self.args.gpu):
+        with chainer.cuda.get_device(self.args.gpu):
             for i, line in enumerate(tqdm.tqdm(self.lines)):
                 image_file = line[0]
-                labels = self.xp.array(line[1:], dtype=self.xp.int32)
-                labels = labels.reshape((-1, self.args.num_labels))
+                labels = self.prepare_label(line[1:])
                 image = self.load_image(image_file)
                 with configuration.using_config('train', False):
                     predictions, crops, grids = self.net(image[self.xp.newaxis, ...])
@@ -140,6 +145,10 @@ class Evaluator:
     def label_to_char(self, label):
         return chr(self.char_map[str(label)])
 
+    def prepare_label(self, data):
+        self.xp.array(data, dtype=self.xp.int32)
+        return data.reshape((-1, self.args.num_labels))
+
     def strip_prediction(self, predictions):
         # TODO Parallelize
         words = []
@@ -155,8 +164,20 @@ class Evaluator:
     def calc_accuracy(self, predictions, labels):
         raise NotImplementedError
 
+    def create_metrics(self):
+        raise NotImplementedError
+
 
 class FSNSEvaluator(Evaluator):
+
+    def create_metrics(self):
+        return SoftmaxMetrics(
+            self.args.blank_symbol,
+            self.args.char_map,
+            self.args.timesteps,
+            self.image_size,
+            uses_original_data=self.args.is_original_fsns,
+        )
 
     def build_recognition_net(self, recognition_net_class):
         return recognition_net_class(
@@ -236,6 +257,14 @@ class FSNSEvaluator(Evaluator):
 
 class SVHNEvaluator(Evaluator):
 
+    def create_metrics(self):
+        return TextRecSoftmaxMetrics(
+            self.args.blank_symbol,
+            self.args.char_map,
+            self.args.timesteps,
+            self.image_size,
+        )
+
     def build_recognition_net(self, recognition_net_class):
         return recognition_net_class(
             self.target_shape,
@@ -297,3 +326,87 @@ class SVHNEvaluator(Evaluator):
         else:
             klass_name, module_name = log_data
         return klass_name, module_name
+
+
+class TextRecognitionEvaluator(Evaluator):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.accuracies = []
+        self.reverse_char_map = {v: k for k, v in self.char_map.items()}
+
+    def calc_accuracy(self, predictions, labels):
+        self.accuracies.append(self.metrics.calc_accuracy((predictions, None, None), labels))
+        #TODO strip prediction and label and return word
+        return '', ''
+
+    def print_results(self):
+        print("Accuracy: {}".format(statistics.mean(self.accuracies)))
+
+    def create_metrics(self):
+        return TextRecSoftmaxMetrics(
+            self.args.blank_symbol,
+            self.args.char_map,
+            self.args.timesteps,
+            self.image_size
+        )
+
+    def create_bbox_plotter(self):
+        self.bbox_plotter = TextRecBBOXPlotter(
+            self.load_image(self.lines[0][0]),
+            os.path.join(self.args.model_dir, 'eval_bboxes'),
+            self.target_shape,
+            self.metrics,
+            visualization_anchors=[["localization_net", "vis_anchor"], ["recognition_net", "vis_anchor"]],
+            render_extracted_rois=False,
+            invoke_before_training=True,
+            render_intermediate_bboxes=self.args.render_all_bboxes,
+        )
+        self.lines = self.lines[:self.args.num_rois]
+
+    def build_fusion_net(self, fusion_net_class, localization_net, recognition_net):
+        return fusion_net_class(localization_net, recognition_net)
+
+    def build_recognition_net(self, recognition_net_class):
+        return recognition_net_class(
+            self.target_shape,
+            num_rois=self.args.timesteps,
+            label_size=52,
+        )
+
+    def build_localization_net(self, localization_net_class):
+        return localization_net_class(
+            self.args.dropout_ratio,
+            self.args.timesteps,
+            self.args.refinement_steps,
+            self.target_shape,
+            zoom=1.0,
+            do_parameter_refinement=self.args.refinement
+        )
+
+    @staticmethod
+    def get_class_and_module(log_data):
+        if not isinstance(log_data, list):
+            if 'InverseCompositional' in log_data:
+                module_name = 'ic_stn.py'
+                klass_name = log_data
+            else:
+                module_name = 'text_recognition.py'
+                klass_name = log_data
+        else:
+            klass_name, module_name = log_data
+        return klass_name, module_name
+
+    def prepare_label(self, data):
+        labels = [int(self.reverse_char_map[ord(character)]) for character in data[0].lower()]
+        labels += [self.args.blank_symbol] * (self.args.timesteps - len(labels))
+        return self.xp.array(labels, dtype=self.xp.int32)[self.xp.newaxis, ...]
+
+    def load_image(self, image_file):
+        with Image.open(image_file) as the_image:
+            the_image = the_image.convert('L')
+            the_image = the_image.resize((self.image_size.width, self.image_size.height), Image.LANCZOS)
+            image = self.xp.asarray(the_image, dtype=np.float32)
+            image /= 255
+            image = self.xp.broadcast_to(image, (3, self.image_size.height, self.image_size.width))
+            return image

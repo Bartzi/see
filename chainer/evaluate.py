@@ -1,7 +1,6 @@
 import argparse
 
-from evaluation.evaluator import FSNSEvaluator, SVHNEvaluator
-
+from evaluation.evaluator import FSNSEvaluator, SVHNEvaluator, TextRecognitionEvaluator
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tool that evaluates a trained model on a chosen test set (either FSNS or SVHN)")
@@ -26,8 +25,14 @@ if __name__ == "__main__":
     svhn_parser = subparsers.add_parser("svhn", help="evaluate svhn model")
     svhn_parser.set_defaults(evaluator=SVHNEvaluator)
 
+    text_recognition_parser = subparsers.add_parser("textrec", help="evaluate text recognition model")
+    text_recognition_parser.set_defaults(evaluator=TextRecognitionEvaluator)
+
     args = parser.parse_args()
     args.is_original_fsns = True
+    args.refinement_steps = 0
+    args.refinement = False
+    args.render_all_bboxes = False
 
     evaluator = args.evaluator(args)
     evaluator.evaluate()
