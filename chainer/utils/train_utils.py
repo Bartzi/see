@@ -179,7 +179,6 @@ def add_default_arguments(parser):
     parser.add_argument('-g', '--gpus', type=int, nargs="*", default=[], help="Ids of GPU to use [default: (use cpu)]")
     parser.add_argument('-e', '--epochs', type=int, default=10, help="Number of epochs to train [default: 10]")
     parser.add_argument('-r', '--resume', help="path to previously saved state of trained model from which training shall resume")
-    parser.add_argument('-m', '--model', help="path to pretrained model that has been converted to fit to this model")
     parser.add_argument('-si', '--snapshot-interval', dest='snapshot_interval', type=int, default=20000,
                         help="number of iterations after which a snapshot shall be taken [default: 20000]")
     parser.add_argument('-ln', '--log-name', dest='log_name', default='training', help="name of the log folder")
