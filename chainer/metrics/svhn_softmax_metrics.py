@@ -12,7 +12,7 @@ class SVHNSoftmaxMetrics(SoftmaxMetrics):
         batch_predictions, _, _ = x
 
         # concat all individual predictions and slice for each time step
-        batch_predictions = F.concat([F.expand_dims(p, axis=2) for p in batch_predictions], axis=2)
+        batch_predictions = F.concat([F.expand_dims(p, axis=0) for p in batch_predictions], axis=0)
 
         self.xp = cuda.get_array_module(batch_predictions[0], t)
         batch_size = t.shape[0]
@@ -31,7 +31,7 @@ class SVHNSoftmaxMetrics(SoftmaxMetrics):
         batch_predictions, _, _ = x
 
         # concat all individual predictions and slice for each time step
-        batch_predictions = F.concat([F.expand_dims(p, axis=2) for p in batch_predictions], axis=2)
+        batch_predictions = F.concat([F.expand_dims(p, axis=0) for p in batch_predictions], axis=0)
 
         self.xp = cuda.get_array_module(batch_predictions[0], t)
         batch_size = t.shape[0]

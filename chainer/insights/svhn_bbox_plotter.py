@@ -9,7 +9,7 @@ class SVHNBBoxPlotter(BBOXPlotter):
 
     def decode_predictions(self, predictions):
         # concat all individual predictions and slice for each time step
-        predictions = F.concat([F.expand_dims(p, axis=2) for p in predictions], axis=2)
+        predictions = F.concat([F.expand_dims(p, axis=0) for p in predictions], axis=0)
 
         words = []
         with cuda.get_device_from_array(predictions.data):

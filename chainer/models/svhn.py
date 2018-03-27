@@ -133,9 +133,9 @@ class SVHNRecognitionNet(Chain):
             final_lstm_predictions = []
             for lstm_prediction in lstm_predictions:
                 classified = self.classifier(lstm_prediction)
-                final_lstm_predictions.append(F.expand_dims(classified, axis=0))
+                final_lstm_predictions.append(F.expand_dims(classified, axis=1))
 
-            final_lstm_predictions = F.concat(final_lstm_predictions, axis=0)
+            final_lstm_predictions = F.concat(final_lstm_predictions, axis=1)
             overall_predictions.append(final_lstm_predictions)
 
         return overall_predictions, rois, points
