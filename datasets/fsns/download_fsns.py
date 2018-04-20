@@ -34,19 +34,27 @@ if __name__ == "__main__":
 				file_name=file_name,
 			)
 
-			print("downloading {}".format(file_name))
-			with urllib.request.urlopen(url) as url_data, open(os.path.join(dest_dir, file_name), 'wb') as f:
-				file_size = int(url_data.info()['Content-Length'])
+			file_size = int(urllib.request.urlopen(url).info()['Content-Length'])
 
-				downloaded = 0
-				block_size = 8192
-				while True:
-					buffer = url_data.read(block_size)
-					if not buffer:
-						break
+			if (not os.path.exists(os.path.join(dest_dir, file_name)) or
+				os.stat(os.path.join(dest_dir, file_name)).st_size != file_size):
+				print("downloading {}".format(file_name))
+				with urllib.request.urlopen(url) as url_data, open(os.path.join(dest_dir, file_name), 'wb') as f:
+					file_size = int(url_data.info()['Content-Length'])
 
-					downloaded += len(buffer)
-					f.write(buffer)
-					print("Got: {:>10} of {:>10} bytes".format(downloaded, file_size), end='\r')
+					downloaded = 0
+					block_size = 8192
+					while True:
+						buffer = url_data.read(block_size)
+						if not buffer:
+							break
 
-			print("{}".format(" " * 100), end='\r')
+						downloaded += len(buffer)
+						f.write(buffer)
+						print("Got: {:>10} of {:>10} bytes".format(downloaded, file_size), end='\r')
+
+				print("{}".format(" " * 100), end='\r')
+			else:
+				print('File already found at:{location}, Continuing...'.format(
+					location=os.path.join(dest_dir, file_name)))
+				continue
