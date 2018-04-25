@@ -8,7 +8,7 @@ Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scen
 2. It is a good idea to create a virtual environment ([example for creating a venv](http://docs.python-guide.org/en/latest/dev/virtualenvs/))
 3. Make sure you have the latest version of [CUDA](https://developer.nvidia.com/cuda-zone) (>= 8.0) installed
 4. Install [CUDNN](https://developer.nvidia.com/cudnn) (> 6.0)
-5. Install [NCCL](https://developer.nvidia.com/cudnn) (> 2.0)
+5. Install [NCCL](https://developer.nvidia.com/nccl) (> 2.0)
 6. Install all requirements with the following command: `pip install -r requirements.txt`
 7. Check that chainer can use the GPU:
     - start the python interpreter: `python`
