@@ -4,6 +4,9 @@ Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scen
 
 # Installation
 
+You can install the projct directly on your PC or use a Docker container
+
+## Directly on your PC
 1. Make sure to use Python 3
 2. It is a good idea to create a virtual environment ([example for creating a venv](http://docs.python-guide.org/en/latest/dev/virtualenvs/))
 3. Make sure you have the latest version of [CUDA](https://developer.nvidia.com/cuda-zone) (>= 8.0) installed
@@ -16,6 +19,38 @@ Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scen
     - check that cuda is available: `chainer.cuda.available`
     - check that cudnn is enabled: `chainer.cuda.cudnn_enabled`
     - the output of both commands should be `True`
+
+## Using Docker
+1. Install `Docker`
+   - Windows: Get it [here](https://www.docker.com/community-edition)
+   - Mac: Get it [here](https://www.docker.com/community-edition)
+   - Linux: User your favourite package manager i.e. `pacman -S docker`, or use [this guide](https://docs.docker.com/install/linux/docker-ce/ubuntu/) for Ubuntu.
+2. Install CUDA related things:
+    - [CUDA](https://developer.nvidia.com/cuda-zone) (>= 8.0) installed
+    - [CUDNN](https://developer.nvidia.com/cudnn) (> 6.0)
+    - nvidia-docker ([Ubuntu](https://gist.github.com/dsdenes/d9c66361df96bce3fca8f1414bb14bce), [Arch Like OS](https://aur.archlinux.org/packages/nvidia-docker2/)))
+3. Get [NCCL](https://developer.nvidia.com/nccl)
+    - make sure to download the version for Ubuntu 16.04, that fits to your local CUDA configuration (i.e. you have installed CUDA 9.1 take the version for CUDA 9.1, if you have CUDA 8, take the version for CUDA 8)
+    - place it in the root folder of the project
+4. Build the Docker image
+    - `docker build -t see .`
+    - If your host system uses CUDA with a version earlier than 9.1, specify the corresponding docker image to match the configuration of your machine (see [this list](https://hub.docker.com/r/nvidia/cuda/) for available options).
+    For example, for CUDA 8 and CUDNN 6 use the following instead:
+    ```
+    docker build -t see --build-arg FROM_IMAGE=nvidia/cuda:8.0-cudnn6-devel-ubuntu16.04 .
+    ```
+    - if you did not download a file called `nccl-repo-ubuntu1604-2.1.15-ga-cuda9.1_1-1_amd64.deb`, set the argument `NCCL_NAME` to the name of the file you downloaded. For example:
+    ```
+    docker build -t see --build-arg NCCL_NAME=nccl-repo-ubuntu1604-2.1.15-ga-cuda9.0_1-1_amd64.deb .
+    ```
+5. Check that everything is okay, by entering a shell in the container and do the following:
+    - run the container with: `nvidia-docker run -it see`
+    - start the python interpreter: `python3`
+    - import chainer: `import chainer`
+    - check that cuda is available: `chainer.cuda.available`
+    - check that cudnn is enabled: `chainer.cuda.cudnn_enabled`
+    - the output of both commands should be `True`
+6. **Hint:** make sure to mount all data folders you need into the container with the `-v` option for running a container.
 
 
 # SVHN Experiments
