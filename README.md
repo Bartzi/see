@@ -338,7 +338,7 @@ If you find this code useful, please cite our paper:
 	year = {2018},
 	keywords = {Computer Vision; Semi-Supervised Learning},
 	url = {https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16270}
-}
+    }
 
 
 # Notes
