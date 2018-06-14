@@ -163,7 +163,7 @@ if __name__ == "__main__":
         gpu_datasets = [train_dataset]
 
     train_iterators = [chainer.iterators.MultiprocessIterator(dataset, args.batch_size) for dataset in gpu_datasets]
-    validation_iterator = chainer.iterators.MultiprocessIterator(validation_dataset, args.batch_size)
+    validation_iterator = chainer.iterators.MultiprocessIterator(validation_dataset, args.batch_size, repeat=False)
 
     # use the MultiProcessParallelUpdater in order to harness the full power of data parallel computation
     updater = MultiprocessParallelUpdater(train_iterators, optimizer, devices=args.gpus)
