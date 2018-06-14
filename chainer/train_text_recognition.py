@@ -45,7 +45,7 @@ if __name__ == "__main__":
                         help='freeze weights of localization net')
     parser.add_argument("--zoom", type=float, default=0.9, help="Zoom for initial bias of spatial transformer")
     parser.add_argument("--optimize-all-interval", type=int, default=5,
-                        help="intervall in which to optimize the whole network instead of only a part")
+                        help="interval in which to optimize the whole network instead of only a part")
     parser.add_argument("--use-dropout", action='store_true', default=False, help='use dropout in network')
     parser.add_argument("--test-image", help='path to an image that should be used by BBoxPlotter')
     parser.add_argument("--refinement-steps", type=int, default=1, help="number of iterations IC-STN shall perform to refine bbox proposals")
@@ -161,10 +161,12 @@ if __name__ == "__main__":
             MultiprocessIterator(dataset, args.batch_size, n_processes=args.num_processes)
             for dataset in gpu_datasets
         ]
+
         validation_iterator = MultiprocessIterator(
             validation_dataset,
             args.batch_size,
-            n_processes=args.num_processes
+            n_processes=args.num_processes,
+            repeat=False
         )
 
     updater = MultiprocessParallelUpdater(
