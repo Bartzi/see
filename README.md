@@ -284,6 +284,16 @@ the program like this: `python show_progress.py`. It will open a TK window.
 In case the program complains that it is not able to find TK related libraries,
 you will need to install them.
 
+Another approach is that you can use `ChainerUI`, execute following commands to setup `ChainerUI`:
+- `chainerui db create`
+- `chainerui db upgrade`
+
+Create project using following command from the project directory:
+- `chainerui project create -d ./ -n see-ocr`
+
+To check progress start server:
+- `chainerui server`
+
 ## Creating an animation of plotted train steps
 
 The training script contains a little helper that applies the current
