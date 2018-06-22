@@ -200,8 +200,7 @@ if __name__ == "__main__":
 
     # callback that logs report
     def log_postprocess(stats_cpu):
-        # only log further information once and not every time we log our progress
-        if stats_cpu['epoch'] == 0 and stats_cpu['iteration'] == args.log_interval:
+        if stats_cpu['iteration'] == args.log_interval:
             stats_cpu.update(report)
 
 
