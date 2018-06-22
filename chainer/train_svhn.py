@@ -39,13 +39,13 @@ if __name__ == "__main__":
     parser.add_argument("--load-localization", action='store_true', default=False, help="only load localization net")
     parser.add_argument("--load-recognition", action='store_true', default=False, help="only load recognition net")
     parser.add_argument("--is-trainer-snapshot", action='store_true', default=False,
-                        help="inidicate that snapshot to load has been saved by trainer itself")
+                        help="indicate that snapshot to load has been saved by trainer itself")
     parser.add_argument("--no-log", action='store_false', default=True, help="disable logging")
     parser.add_argument("--freeze-localization", action='store_true', default=False,
                         help='freeze weights of localization net')
     parser.add_argument("--zoom", type=float, default=0.9, help="Zoom for initial bias of spatial transformer")
     parser.add_argument("--optimize-all-interval", type=int, default=5,
-                        help="intervall in which to optimize the whole network instead of only a part")
+                        help="interval in which to optimize the whole network instead of only a part")
     parser.add_argument("--use-dropout", action='store_true', default=False, help='use dropout in network')
     parser.add_argument("--test-image", help='path to an image that should be used by BBoxPlotter')
     parser = add_default_arguments(parser)

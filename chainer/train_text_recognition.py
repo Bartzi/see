@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument("--load-localization", action='store_true', default=False, help="only load localization net")
     parser.add_argument("--load-recognition", action='store_true', default=False, help="only load recognition net")
     parser.add_argument("--is-trainer-snapshot", action='store_true', default=False,
-                        help="inidicate that snapshot to load has been saved by trainer itself")
+                        help="indicate that snapshot to load has been saved by trainer itself")
     parser.add_argument("--no-log", action='store_false', default=True, help="disable logging")
     parser.add_argument("--freeze-localization", action='store_true', default=False,
                         help='freeze weights of localization net')

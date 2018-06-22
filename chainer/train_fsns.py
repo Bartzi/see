@@ -52,7 +52,7 @@ if __name__ == "__main__":
                         help='freeze weights of localization net')
     parser.add_argument("--zoom", type=float, default=0.9, help="Zoom for initial bias of spatial transformer")
     parser.add_argument("--optimize-all-interval", type=int, default=5,
-                        help="intervall in which to optimize the whole network instead of only a part")
+                        help="interval in which to optimize the whole network instead of only a part")
     parser.add_argument("--use-dropout", action='store_true', default=False, help='use dropout in network')
     parser.add_argument("--test-image", help='path to an image that should be used by BBoxPlotter')
     parser = add_default_arguments(parser)
