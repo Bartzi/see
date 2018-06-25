@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import json
 import os
 import shutil
 
@@ -69,6 +70,9 @@ if __name__ == "__main__":
         ('num_labels', ['predictor', 'recognition_net']),
     ]
 
+    with open(args.char_map, 'r') as fp:
+        char_map = json.load(fp)
+    num_labels = len(char_map)
     curriculum = BabyStepCurriculum(
         args.dataset_specification,
         TextRecFileDataset,
@@ -108,7 +112,7 @@ if __name__ == "__main__":
     recognition_net = TextRecognitionNet(
         target_shape,
         num_rois=train_dataset.num_timesteps,
-        label_size=52,
+        label_size=num_labels,
     )
     net = TextRecNet(localization_net, recognition_net)
 
