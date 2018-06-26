@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import json
 import os
 import shutil
 
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--load-localization", action='store_true', default=False, help="only load localization net")
     parser.add_argument("--load-recognition", action='store_true', default=False, help="only load recognition net")
     parser.add_argument("--is-trainer-snapshot", action='store_true', default=False,
-                        help="inidicate that snapshot to load has been saved by trainer itself")
+                        help="indicate that snapshot to load has been saved by trainer itself")
     parser.add_argument("--no-log", action='store_false', default=True, help="disable logging")
     parser.add_argument("--freeze-localization", action='store_true', default=False,
                         help='freeze weights of localization net')
@@ -69,6 +70,9 @@ if __name__ == "__main__":
         ('num_labels', ['predictor', 'recognition_net']),
     ]
 
+    with open(args.char_map, 'r') as fp:
+        char_map = json.load(fp)
+    num_labels = len(char_map)
     curriculum = BabyStepCurriculum(
         args.dataset_specification,
         TextRecFileDataset,
@@ -108,7 +112,7 @@ if __name__ == "__main__":
     recognition_net = TextRecognitionNet(
         target_shape,
         num_rois=train_dataset.num_timesteps,
-        label_size=52,
+        label_size=num_labels,
     )
     net = TextRecNet(localization_net, recognition_net)
 
@@ -200,8 +204,7 @@ if __name__ == "__main__":
 
     # callback that logs report
     def log_postprocess(stats_cpu):
-        # only log further information once and not every time we log our progress
-        if stats_cpu['epoch'] == 0 and stats_cpu['iteration'] == args.log_interval:
+        if stats_cpu['iteration'] == args.log_interval:
             stats_cpu.update(report)
 
 
