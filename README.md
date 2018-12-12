@@ -208,7 +208,7 @@ In case you only want to see how the model behaves on a given image, you can use
 This script expects a trained model, an image and a char map an prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
-`python fsns_demo.py <path to dataset directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
+`python fsns_demo.py <path to log directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
 It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
 and how they extract the characters from the predictions and you should be good to go!
 
@@ -246,7 +246,7 @@ Analog to the `fsns_demo.py` script, we offer a demo script for text recognition
 This script expects a trained model, an image and a char map an prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
-`python text_recognition_demo.py <path to dataset directory> model_190000.npz <path to example image> ../datasets/textrec/ctc_char_map.json`
+`python text_recognition_demo.py <path to log directory> model_190000.npz <path to example image> ../datasets/textrec/ctc_char_map.json`
 It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
 and how they extract the characters from the predictions and you should be good to go!
 
