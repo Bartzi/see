@@ -28,7 +28,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tool to train a text detection network based on Spatial Transformers")
     parser.add_argument('dataset_specification',
                         help='path to json file that contains all datasets to use in a list of dicts')
-    parser.add_argument("--timesteps", type=int, default=3, help='max number of words/textlines to find')
     parser.add_argument("--blank-label", type=int, default=0, help="blank label to use during training")
     parser.add_argument("--char-map", help="path to char map")
     parser.add_argument("--send-bboxes", action='store_true', default=False,
