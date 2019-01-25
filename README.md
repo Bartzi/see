@@ -156,17 +156,17 @@ the dataset. These steps need to be done:
 You will need to specify a directory, where the data shall be saved.
 2. the script `tfrecord_to_image.py` extracts all images and labels from
 the downloaded dataset.
-3. next, you will need to transform the original ground truth, to the ground truth
+3. We advice you to use the script `swap_classes.py`.
+With this script we will set the class of the blank label to be `0`, as it is defined in
+the class to label map `fsns_char_map.json`. You can invoke the script like this:
+`python swap_classes.py <gt_file> <output_file_name> 0 133`
+4. next, you will need to transform the original ground truth, to the ground truth
 format we used for training. Our ground truth format differs, because we
 found that it is not possible to train the model, if the word boundaries are not
 explicitly given to the model. We therefore transform the line based ground truth
 to a word based ground truth. You can use the script `transform_gt.py` for doing that.
 You could call the script like that:
 `python transform_gt.py <path to original gt> fsns_char_map.json <path to new gt>`.
-4. Because of legacy reasons we advice you to use the script `swap_classes.py`.
-With this script we will set the class of the blank label to be `0`, as it is defined in
-the class to label map `fsns_char_map.json`. You can invoke the script like this:
-`python swap_classes.py <gt_file> <output_file_name> 0 133`
 
 ## Training the Network
 
