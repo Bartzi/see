@@ -52,6 +52,9 @@ You can install the projct directly on your PC or use a Docker container
     - the output of both commands should be `True`
 6. **Hint:** make sure to mount all data folders you need into the container with the `-v` option for running a container.
 
+# General Training Hints
+
+If you like to train a network with more than 4 words per image, you will need to adjust or delete the `loss_weights` (see [this](https://github.com/Bartzi/see/blob/master/chainer/metrics/loss_metrics.py#L206) line). Otherwise the code will throw errors at you. They are mainly meant for training FSNS models and should be discarded when training other models.
 
 # SVHN Experiments
 
@@ -200,7 +203,6 @@ You will need to specify at least the following parameters:
 - `--char-map ../datasets/fsns/fsns_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
 - `-b <batch-size>` - set the batch size used for training
-
 
 ## FSNS Demo
 
