@@ -4,14 +4,14 @@ Code for the AAAI 2018 publication "SEE: Towards Semi-Supervised End-to-End Scen
 
 # Installation
 
-You can install the projct directly on your PC or use a Docker container
+You can install the project directly on your PC or use a Docker container
 
 ## Directly on your PC
 1. Make sure to use Python 3
 2. It is a good idea to create a virtual environment ([example for creating a venv](http://docs.python-guide.org/en/latest/dev/virtualenvs/))
 3. Make sure you have the latest version of [CUDA](https://developer.nvidia.com/cuda-zone) (>= 8.0) installed
 4. Install [CUDNN](https://developer.nvidia.com/cudnn) (> 6.0)
-5. Install [NCCL](https://developer.nvidia.com/nccl) (> 2.0) (installation guide)[https://docs.nvidia.com/deeplearning/sdk/nccl-archived/nccl_2212/nccl-install-guide/index.html]
+5. Install [NCCL](https://developer.nvidia.com/nccl) (> 2.0) [installation guide](https://docs.nvidia.com/deeplearning/sdk/nccl-archived/nccl_2212/nccl-install-guide/index.html)
 6. Install all requirements with the following command: `pip install -r requirements.txt`
 7. Check that chainer can use the GPU:
     - start the python interpreter: `python`
@@ -54,14 +54,14 @@ You can install the projct directly on your PC or use a Docker container
 
 # General Training Hints
 
-If you like to train a network with more than 4 words per image, you will need to adjust or delete the `loss_weights` (see [this](https://github.com/Bartzi/see/blob/master/chainer/metrics/loss_metrics.py#L206) line). Otherwise the code will throw errors at you. They are mainly meant for training FSNS models and should be discarded when training other models.
+If you like to train a network with more than 4 words per image, you will need to adjust or delete the `loss_weights` (see [this](https://github.com/Bartzi/see/blob/master/chainer/metrics/loss_metrics.py#L206) line). Otherwise, the code will throw errors at you. They are mainly meant for training FSNS models and should be discarded when training other models.
 
 # SVHN Experiments
 
 We performed several experiments on the SVHN dataset.
 First, we tried to see whether our architecture is able to reach competitive results
 on the SVHN recognition challenge.
-Second, we wanted to determine whether our localization network can find text
+Second, we wanted to determine whether our localization network can find a text
 distributed on a given grid.
 In our last experiment we created a dataset, where we randomly distributed
 the text samples on the image.
@@ -130,7 +130,7 @@ the script like this: `python train_svhn.py -h`
 
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
-- `log_dir` - this is the path to directory where the logs shall be saved
+- `log_dir` - this is the path to the directory where the logs shall be saved
 - `--char-map ../datasets/svhn/svhn_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
 - `-b <batch-size>` - set the batch size used for training
@@ -159,14 +159,14 @@ the dataset. These steps need to be done:
 You will need to specify a directory, where the data shall be saved.
 2. the script `tfrecord_to_image.py` extracts all images and labels from
 the downloaded dataset.
-3. We advice you to use the script `swap_classes.py`.
+3. We advise you to use the script `swap_classes.py`.
 With this script we will set the class of the blank label to be `0`, as it is defined in
 the class to label map `fsns_char_map.json`. You can invoke the script like this:
 `python swap_classes.py <gt_file> <output_file_name> 0 133`
 4. next, you will need to transform the original ground truth, to the ground truth
-format we used for training. Our ground truth format differs, because we
-found that it is not possible to train the model, if the word boundaries are not
-explicitly given to the model. We therefore transform the line based ground truth
+format we used for training. Our ground truth format differs because we
+found that it is not possible to train the model if the word boundaries are not
+explicitly given to the model. We, therefore, transform the line based ground truth
 to a word based ground truth. You can use the script `transform_gt.py` for doing that.
 You could call the script like that:
 `python transform_gt.py <path to original gt> fsns_char_map.json <path to new gt>`.
@@ -175,9 +175,9 @@ You could call the script like that:
 
 Before you can start training the network, you will need to do the following preparations:
 
-In the last section we already introduced the `transform_gt.py` script.
+In the last section, we already introduced the `transform_gt.py` script.
 As we found that it is only possible to train a new model on the FSNS dataset,
-when using a curriculum learning strategy, we need to create a learn curriculum
+when using a curriculum learning strategy, we need to create a learning curriculum
 prior to starting the training. You can do this by following these steps:
 
 1. create ground truth files for each step of the curriculum with the `transform_gt.py`
@@ -187,7 +187,7 @@ script.
     script: `python transform_gt.py <path to downloaded gt> fsns_char_map.json <path to 2 word gt> --max-words 2 --blank-label 0`
     3. Repeat this step with 3 and 4 words (you can also take 5 and 6, too), but make sure
     to only include images with the corresponding amount of words (`--min-words` is the flag to use)
-2. Add the path to your files to a `.json` file tht could be called `curriculum.json`
+2. Add the path to your files to a `.json` file that could be called `curriculum.json`
 This file works exactly the same as the file discussed in step 3 in the preparations section
 for the SVHN experiments.
 
@@ -195,11 +195,11 @@ Once you are done with this, you can actually train the network :tada:
 
 Training the network happens, by using the `train_fsns.py` script.
 `python train_fsns.py -h` shows all available command-line options.
-This script works very similar to the `train_svhn.py` script
+This script works very similarly to the `train_svhn.py` script
 
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
-- `log_dir` - this is the path to directory where the logs shall be saved
+- `log_dir` - this is the path to the directory where the logs shall be saved
 - `--char-map ../datasets/fsns/fsns_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
 - `-b <batch-size>` - set the batch size used for training
@@ -207,11 +207,11 @@ You will need to specify at least the following parameters:
 ## FSNS Demo
 
 In case you only want to see how the model behaves on a given image, you can use the `fsns_demo.py` script.
-This script expects a trained model, an image and a char map an prints you the predicted words in the
+This script expects a trained model, an image and a char map and prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
 `python fsns_demo.py <path to log directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
-It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
+It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaluators create the network
 and how they extract the characters from the predictions and you should be good to go!
 
 # Text Recognition
@@ -233,11 +233,11 @@ After you are done with preparing the dataset, you can start training.
 
 Training the network happens, by using the `train_text_recognition.py` script.
 `python train_text_recognition.py -h` shows all available command-line options.
-This script works very similar to the `train_svhn.py` and `train_fsns.py` script
+This script works very similarly to the `train_svhn.py` and `train_fsns.py` script
 
 You will need to specify at least the following parameters:
 - `dataset_specification` - this is the path to the `json` file you just created
-- `log_dir` - this is the path to directory where the logs shall be saved
+- `log_dir` - this is the path to the directory where the logs shall be saved
 - `--char-map ../datasets/textrec/ctc_char_map.json` - path to the char map for mapping classes to labels.
 - `--blank-label 0` - indicates that class 0 is the blank label
 - `-b <batch-size>` - set the batch size used for training
@@ -245,23 +245,23 @@ You will need to specify at least the following parameters:
 ## Text Recognition Demo
 
 Analog to the `fsns_demo.py` script, we offer a demo script for text recognition named `text_recognition_demo.py`.
-This script expects a trained model, an image and a char map an prints you the predicted words in the
+This script expects a trained model, an image and a char map and prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
 `python text_recognition_demo.py <path to log directory> model_190000.npz <path to example image> ../datasets/textrec/ctc_char_map.json`
-It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaulators create the network
+It should be fairly easy to extend this script to also work with other models. Just have a look at how the different evaluators create the network
 and how they extract the characters from the predictions and you should be good to go!
 
 # Pretrained Models
 
 You can download our best performing model on the FSNS dataset, a model
-for our SVHN experiments and also a model for our text recognitin experiments [here](https://bartzi.de/research/see).
+for our SVHN experiments and also a model for our text recognition experiments [here](https://bartzi.de/research/see).
 
 
 # General Notes on Training
 
 This section contains information about things that happen while a network is training.
-It includes a description of all data that is being logged and backed up for each train run
+It includes a description of all data that is being logged and backed up for each training run
 and a description of a tool that can be used to inspect the training, while
 it is running.
 
@@ -272,11 +272,11 @@ data that is to be logged. The code logs the following pieces of data:
 - it creates a backup of the currently used network definition files
 - it saves a snapshot of the model at each epoch, or after `snapshot_interval` iterations (default 5000)
 - it saves loss and accuracy values at the configured print interval (each time after 100 iterations)
-- it will save the prediction of the model on a given, or randomly chosen sample. This visualization
-helps with assessing, whether the network is converging or not. It also enables you to inspect the train progress
+- it will save the prediction of the model on a given or randomly chosen sample. This visualization
+helps with assessing, whether the network is converging or not. It also enables you to inspect the training progress
 while the network is training.
 
-## Inspecting the train progress
+## Inspecting the training progress
 
 If you leave the default settings, you can inspect the progress of the
 training in real time, by using the script `show_progress.py`. This script
@@ -290,7 +290,7 @@ Another approach is that you can use `ChainerUI`, execute following commands to 
 - `chainerui db create`
 - `chainerui db upgrade`
 
-Create project using following command from the project directory:
+Create a project using the following command from the project directory:
 - `chainerui project create -d ./ -n see-ocr`
 
 To check progress start server:
@@ -319,7 +319,7 @@ You can evaluate all models (svhn/fsns/textrecognition) with the script `evaluat
 You will need a directory containing the following items:
 - log_file of the training
 - saved model
-- network definition files that have been backed up by the train script
+- network definition files that have been backed up by the training script
 - set the gpu to use with `--gpu <id of gpu>`, the code does currently not work on CPU.
 - number of labels per timestep (typically max. 5 for SVHN and 21 for FSNS)
 
