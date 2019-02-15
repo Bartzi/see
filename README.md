@@ -207,7 +207,7 @@ You will need to specify at least the following parameters:
 ## FSNS Demo
 
 In case you only want to see how the model behaves on a given image, you can use the `fsns_demo.py` script.
-This script expects a trained model, an image and a char map prints you the predicted words in the
+This script expects a trained model, an image and a char map and prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
 `python fsns_demo.py <path to log directory> model_35000.npz <path to example image> ../datasets/fsns/fsns_char_map.json`
@@ -245,7 +245,7 @@ You will need to specify at least the following parameters:
 ## Text Recognition Demo
 
 Analog to the `fsns_demo.py` script, we offer a demo script for text recognition named `text_recognition_demo.py`.
-This script expects a trained model, an image and a char map prints you the predicted words in the
+This script expects a trained model, an image and a char map and prints you the predicted words in the
 image + the predicted bounding boxes.
 If you download the model provided [here](https://bartzi.de/research/see), you could call the script like this:
 `python text_recognition_demo.py <path to log directory> model_190000.npz <path to example image> ../datasets/textrec/ctc_char_map.json`
