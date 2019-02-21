@@ -79,7 +79,7 @@ if __name__ == "__main__":
         args.gpus,
         attributes_to_adjust=attributes_to_adjust,
         trigger=(args.test_interval, 'iteration'),
-        min_delta=10,
+        min_delta=0.1,
     )
     train_dataset, validation_dataset = curriculum.load_dataset(0)
 

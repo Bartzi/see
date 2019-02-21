@@ -88,7 +88,6 @@ if __name__ == "__main__":
     )
 
     train_dataset, validation_dataset = curriculum.load_dataset(0)
-    print(len(train_dataset.labels))
     train_dataset.resize_size = image_size
     validation_dataset.resize_size = image_size
 
