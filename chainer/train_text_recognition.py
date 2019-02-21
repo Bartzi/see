@@ -76,6 +76,7 @@ if __name__ == "__main__":
         args.dataset_specification,
         TextRecFileDataset,
         args.blank_label,
+        args.gpus,
         attributes_to_adjust=attributes_to_adjust,
         trigger=(args.test_interval, 'iteration'),
         min_delta=1.0,
@@ -87,6 +88,7 @@ if __name__ == "__main__":
     )
 
     train_dataset, validation_dataset = curriculum.load_dataset(0)
+    print(len(train_dataset.labels))
     train_dataset.resize_size = image_size
     validation_dataset.resize_size = image_size
 
@@ -270,6 +272,7 @@ if __name__ == "__main__":
         updater,
         log_dir,
         fields_to_print,
+        curriculum=curriculum,
         epochs=args.epochs,
         snapshot_interval=args.snapshot_interval,
         print_interval=args.log_interval,

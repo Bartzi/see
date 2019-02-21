@@ -76,9 +76,10 @@ if __name__ == "__main__":
         args.dataset_specification,
         FileBasedDataset,
         args.blank_label,
+        args.gpus,
         attributes_to_adjust=attributes_to_adjust,
         trigger=(args.test_interval, 'iteration'),
-        min_delta=0.1,
+        min_delta=10,
     )
     train_dataset, validation_dataset = curriculum.load_dataset(0)
 
@@ -263,6 +264,7 @@ if __name__ == "__main__":
         updater,
         log_dir,
         fields_to_print,
+        curriculum=curriculum,
         epochs=args.epochs,
         snapshot_interval=args.snapshot_interval,
         print_interval=args.log_interval,
