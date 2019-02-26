@@ -77,7 +77,7 @@ def create_network(args, log_data):
 
 def load_image(image_file, xp):
     with Image.open(image_file) as the_image:
-        image = xp.asarray(the_image, dtype=np.float32)
+        image = xp.asarray(the_image.convert('RGB'), dtype=np.float32)
         image /= 255
         image = image.transpose(2, 0, 1)
 
