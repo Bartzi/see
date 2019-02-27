@@ -8,12 +8,12 @@ from chainer.training import extension
 import chainer.training.trigger as trigger_module
 
 from datasets.concatenated_dataset import ConcatenatedDataset
-from datasets.sub_dataset import split_dataset_random, split_dataset
+from datasets.sub_dataset import split_dataset_random, split_dataset, split_dataset_n_random
 
 
 class BabyStepCurriculum(extension.Extension):
 
-    def __init__(self, dataset_specification, dataset_class, blank_label, trigger=(1, 'epoch'), min_delta=0.01, attributes_to_adjust=(), maxlen=5, dataset_args=None):
+    def __init__(self, dataset_specification, dataset_class, blank_label, gpus, trigger=(1, 'epoch'), min_delta=0.01, attributes_to_adjust=(), maxlen=5, dataset_args=None):
         if dataset_args is None:
             dataset_args = {}
         self.dataset_class = dataset_class
@@ -24,7 +24,9 @@ class BabyStepCurriculum(extension.Extension):
         self.min_delta = min_delta
         self.attributes_to_adjust = attributes_to_adjust
         self.blank_label = blank_label
+        self.gpus = gpus
         self.force_enlarge_dataset = False
+        self.training_finished = False
 
         with open(dataset_specification) as specification:
             specification = json.load(specification)
@@ -42,7 +44,7 @@ class BabyStepCurriculum(extension.Extension):
 
     def training_converged(self):
         # check whether system already settled and we can enlarge train set
-        reference_value = self.queue.pop()
+        reference_value = self.queue[self.maxlen-1]
         deltas = []
         for value in self.queue:
             deltas.append(abs(value - reference_value))
@@ -66,7 +68,7 @@ class BabyStepCurriculum(extension.Extension):
 
         if self.trigger(trainer):
             with cuda.get_device_from_id(trainer.updater.get_optimizer('main').target._device_id):
-                loss = trainer.observation.get('validation/main/loss', None)
+                loss = trainer.observation.get('fast_validation/main/loss', None)
                 if loss is None:
                     return
                 queue_data = loss.data if isinstance(loss, Variable) else loss
@@ -81,21 +83,22 @@ class BabyStepCurriculum(extension.Extension):
         print("enlarging datasets")
         # we can add new samples to the train dataset
         self.current_level += 1
-        try:
+        if self.current_level < len(self.train_curriculum):
             train_dataset, validation_dataset = self.load_dataset(self.current_level)
-        except KeyError:
+        else:
             # we have exhausted our train curriculum we need to stop!
-            raise StopIteration
+            self.training_finished = True
+            print("Training curriculum has finished. Terminating the training process.\n")
+            return
         self.update_iterators(trainer, train_dataset, validation_dataset)
         self.adjust_attributes(trainer.updater.get_optimizer('main').target, train_dataset)
         self.queue.clear()
 
-    @staticmethod
-    def split_dataset(dataset):
-        gpu_datasets = split_dataset_random(dataset, len(dataset) // 2)
-        if not len(gpu_datasets[0]) == len(gpu_datasets[1]):
-            adapted_second_split = split_dataset(gpu_datasets[1], len(gpu_datasets[0]))[0]
-            gpu_datasets = (gpu_datasets[0], adapted_second_split)
+    def split_dataset(self, dataset):
+        gpu_datasets = split_dataset_n_random(dataset, len(self.gpus))
+        if not len(gpu_datasets[0]) == len(gpu_datasets[-1]):
+            adapted_second_split = split_dataset(gpu_datasets[-1], len(gpu_datasets[0]))[0]
+            gpu_datasets[-1] = adapted_second_split
         return gpu_datasets
 
     def pad_dataset(self, old_dataset, new_dataset):

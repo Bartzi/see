@@ -1,6 +1,9 @@
 import chainer
 import copy
 import os
+import sys
+import time
+import datetime
 
 import six
 from chainer import reporter as reporter_module
@@ -9,7 +12,9 @@ from chainer.dataset import convert, concat_examples
 from chainer.training import extension
 from chainer.training import extensions
 import chainer.training.trigger as trigger_module
+from chainer.training.triggers import IntervalTrigger
 from chainer.training.extensions import Evaluator
+from chainer.training.extensions import util
 
 from .logger import Logger
 
@@ -130,12 +135,32 @@ def get_fast_evaluator(trigger_interval):
     return type('FastEvaluator', (FastEvaluatorBase,), dict(trigger=trigger_interval, name='fast_validation'))
 
 
-def get_trainer(net, updater, log_dir, print_fields, extra_extensions=(), epochs=10, snapshot_interval=20000, print_interval=100, postprocess=None, do_logging=True, model_files=()):
-    trainer = chainer.training.Trainer(
-        updater,
-        (epochs, 'epoch'),
-        out=log_dir,
-    )
+class EarlyStopIntervalTrigger(IntervalTrigger):
+
+    def __init__(self, period, unit, curriculum):
+        super().__init__(period, unit)
+        self.curriculum = curriculum        
+
+    def __call__(self, trainer):
+        fire = super().__call__(trainer)
+        if self.curriculum.training_finished is True:
+            fire = True
+        return fire
+
+
+def get_trainer(net, updater, log_dir, print_fields, curriculum=None, extra_extensions=(), epochs=10, snapshot_interval=20000, print_interval=100, postprocess=None, do_logging=True, model_files=()):
+    if curriculum is None:
+        trainer = chainer.training.Trainer(
+            updater,
+            (epochs, 'epoch'),
+            out=log_dir,
+        )
+    else:
+        trainer = chainer.training.Trainer(
+            updater,
+            EarlyStopIntervalTrigger(epochs, 'epoch', curriculum),
+            out=log_dir,
+        )
 
     # dump computational graph
     trainer.extend(extensions.dump_graph('main/loss'))
@@ -177,7 +202,7 @@ def add_default_arguments(parser):
     parser.add_argument('-b', '--batch-size', dest='batch_size', type=int, required=True,
                         help="Number of images per training batch")
     parser.add_argument('-g', '--gpus', type=int, nargs="*", default=[], help="Ids of GPU to use [default: (use cpu)]")
-    parser.add_argument('-e', '--epochs', type=int, default=10, help="Number of epochs to train [default: 10]")
+    parser.add_argument('-e', '--epochs', type=int, default=20, help="Number of epochs to train [default: 20]")
     parser.add_argument('-r', '--resume', help="path to previously saved state of trained model from which training shall resume")
     parser.add_argument('-si', '--snapshot-interval', dest='snapshot_interval', type=int, default=20000,
                         help="number of iterations after which a snapshot shall be taken [default: 20000]")
