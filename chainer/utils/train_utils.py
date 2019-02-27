@@ -12,6 +12,7 @@ from chainer.dataset import convert, concat_examples
 from chainer.training import extension
 from chainer.training import extensions
 import chainer.training.trigger as trigger_module
+from chainer.training.triggers import IntervalTrigger
 from chainer.training.extensions import Evaluator
 from chainer.training.extensions import util
 
@@ -134,229 +135,17 @@ def get_fast_evaluator(trigger_interval):
     return type('FastEvaluator', (FastEvaluatorBase,), dict(trigger=trigger_interval, name='fast_validation'))
 
 
-class EarlyStopIntervalTrigger(object):
-
-    """Trigger based on a fixed interval.
-    This trigger accepts iterations divided by a given interval. There are two
-    ways to specify the interval: per iterations and epochs. `Iteration` means
-    the number of updates, while `epoch` means the number of sweeps over the
-    training dataset. Fractional values are allowed if the interval is a
-    number of epochs; the trigger uses the `iteration` and `epoch_detail`
-    attributes defined by the updater.
-    The trigger is also fired if the curriculum is exhausted and training
-    termination condition is true.
-    For the description of triggers, see :func:`~chainer.training.get_trigger`.
-    Args:
-        period (int or float): Length of the interval. Must be an integer if
-            unit is ``'iteration'``.
-        unit (str): Unit of the length specified by ``period``. It must be
-            either ``'iteration'`` or ``'epoch'``.
-    """
+class EarlyStopIntervalTrigger(IntervalTrigger):
 
     def __init__(self, period, unit, curriculum):
-        self.period = period
-        assert unit == 'epoch' or unit == 'iteration'
-        self.unit = unit
-        self.curriculum = curriculum
-
-        self._previous_iteration = 0
-        self._previous_epoch_detail = 0.
-
-        # count is kept for backward compatibility
-        self.count = 0
+        super().__init__(period, unit)
+        self.curriculum = curriculum        
 
     def __call__(self, trainer):
-        """Decides whether the extension should be called on this iteration.
-        Args:
-            trainer (Trainer): Trainer object that this trigger is associated
-                with. The updater associated with this trainer is used to
-                determine if the trigger should fire.
-        Returns:
-            bool: True if the corresponding extension should be invoked in this
-            iteration.
-        """
-        updater = trainer.updater
-        if self.unit == 'epoch':
-            epoch_detail = updater.epoch_detail
-            previous_epoch_detail = self._previous_epoch_detail
-
-            # if previous_epoch_detail is invalid value,
-            # use the value of updater.
-            if previous_epoch_detail < 0:
-                previous_epoch_detail = updater.previous_epoch_detail
-
-            # count is kept for backward compatibility
-            self.count = epoch_detail // self.period
-
-            fire = previous_epoch_detail // self.period != \
-                epoch_detail // self.period
-        else:
-            iteration = updater.iteration
-            previous_iteration = self._previous_iteration
-
-            # if previous_iteration is invalid value,
-            # guess it from current iteration.
-            if previous_iteration < 0:
-                previous_iteration = iteration - 1
-
-            fire = previous_iteration // self.period != \
-                iteration // self.period
-
+        fire = super().__call__(trainer)
         if self.curriculum.training_finished is True:
             fire = True
-
-        # save current values
-        self._previous_iteration = updater.iteration
-        if hasattr(updater, 'epoch_detail'):
-            self._previous_epoch_detail = updater.epoch_detail
-
         return fire
-
-    def serialize(self, serializer):
-        try:
-            self._previous_iteration = serializer(
-                'previous_iteration', self._previous_iteration)
-        except KeyError:
-            warnings.warn(
-                'The previous value of iteration is not saved. '
-                'IntervalTrigger guesses it using current iteration. '
-                'If this trigger is not called at every iteration, '
-                'it may not work correctly.')
-            # set a negative value for invalid
-            self._previous_iteration = -1
-
-        try:
-            self._previous_epoch_detail = serializer(
-                'previous_epoch_detail', self._previous_epoch_detail)
-        except KeyError:
-            warnings.warn(
-                'The previous value of epoch_detail is not saved. '
-                'IntervalTrigger uses the value of '
-                'trainer.updater.previous_epoch_detail. '
-                'If this trigger is not called at every iteration, '
-                'it may not work correctly.')
-            # set a negative value for invalid
-            self._previous_epoch_detail = -1.
-
-    def get_training_length(self):
-        return (self.period, self.unit)
-
-
-class ProgressBar(extension.Extension):
-
-    """Trainer extension to print a progress bar and recent training status.
-    This extension prints a progress bar at every call. It watches the current
-    iteration and epoch to print the bar.
-    Args:
-        training_length (tuple): Length of whole training. It consists of an
-            integer and either ``'epoch'`` or ``'iteration'``. If this value is
-            omitted and the stop trigger of the trainer is
-            :class:`IntervalTrigger`, this extension uses its attributes to
-            determine the length of the training.
-        update_interval (int): Number of iterations to skip printing the
-            progress bar.
-        bar_length (int): Length of the progress bar in characters.
-        out: Stream to print the bar. Standard output is used by default.
-    """
-
-    def __init__(self, training_length=None, update_interval=100,
-                 bar_length=50, out=sys.stdout):
-        self._training_length = training_length
-        self._status_template = None
-        self._update_interval = update_interval
-        self._bar_length = bar_length
-        self._out = out
-        self._recent_timing = []
-
-    def __call__(self, trainer):
-        training_length = self._training_length
-
-        # initialize some attributes at the first call
-        if training_length is None:
-            t = trainer.stop_trigger
-            training_length = t.get_training_length()
-
-        stat_template = self._status_template
-        if stat_template is None:
-            stat_template = self._status_template = (
-                '{0.iteration:10} iter, {0.epoch} epoch / %s %ss\n' %
-                training_length)
-
-        length, unit = training_length
-        out = self._out
-
-        iteration = trainer.updater.iteration
-
-        # print the progress bar
-        if iteration % self._update_interval == 0:
-            epoch = trainer.updater.epoch_detail
-            recent_timing = self._recent_timing
-            now = time.time()
-
-            recent_timing.append((iteration, epoch, now))
-
-            if os.name == 'nt':
-                util.erase_console(0, 0)
-            else:
-                out.write('\033[J')
-
-            if unit == 'iteration':
-                rate = iteration / length
-            else:
-                rate = epoch / length
-            rate = min(rate, 1.0)
-
-            bar_length = self._bar_length
-            marks = '#' * int(rate * bar_length)
-            out.write('     total [{}{}] {:6.2%}\n'.format(
-                marks, '.' * (bar_length - len(marks)), rate))
-
-            epoch_rate = epoch - int(epoch)
-            marks = '#' * int(epoch_rate * bar_length)
-            out.write('this epoch [{}{}] {:6.2%}\n'.format(
-                marks, '.' * (bar_length - len(marks)), epoch_rate))
-
-            status = stat_template.format(trainer.updater)
-            out.write(status)
-
-            old_t, old_e, old_sec = recent_timing[0]
-            span = now - old_sec
-            if span != 0:
-                speed_t = (iteration - old_t) / span
-                speed_e = (epoch - old_e) / span
-            else:
-                speed_t = float('inf')
-                speed_e = float('inf')
-
-            if unit == 'iteration':
-                estimated_time = (length - iteration) / speed_t
-            else:
-                estimated_time = (length - epoch) / speed_e
-            estimated_time = max(estimated_time, 0.0)
-            out.write('{:10.5g} iters/sec. Estimated time to finish: {}.\n'
-                      .format(speed_t,
-                              datetime.timedelta(seconds=estimated_time)))
-
-            # move the cursor to the head of the progress bar
-            if os.name == 'nt':
-                util.set_console_cursor_position(0, -4)
-            else:
-                out.write('\033[4A')
-            if hasattr(out, 'flush'):
-                out.flush()
-
-            if len(recent_timing) > 100:
-                del recent_timing[0]
-
-    def finalize(self):
-        # delete the progress bar
-        out = self._out
-        if os.name == 'nt':
-            util.erase_console(0, 0)
-        else:
-            out.write('\033[J')
-        if hasattr(out, 'flush'):
-            out.flush()
 
 
 def get_trainer(net, updater, log_dir, print_fields, curriculum=None, extra_extensions=(), epochs=10, snapshot_interval=20000, print_interval=100, postprocess=None, do_logging=True, model_files=()):
@@ -400,7 +189,7 @@ def get_trainer(net, updater, log_dir, print_fields, curriculum=None, extra_exte
         ))
 
     # Progressbar!!
-    trainer.extend(ProgressBar(update_interval=1))
+    trainer.extend(extensions.ProgressBar(update_interval=1))
 
     for extra_extension, trigger in extra_extensions:
         trainer.extend(extra_extension, trigger=trigger)
