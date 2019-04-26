@@ -343,13 +343,11 @@ In order to evaluate a text recognition model, you will need to invoke the scrip
 
 If you find this code useful, please cite our paper:
 
-    @paper{AAAI1816270,
-	author = {Christian Bartz and Haojin Yang and Christoph Meinel},
-	title = {SEE: Towards Semi-Supervised End-to-End Scene Text Recognition},
-	conference = {AAAI Conference on Artificial Intelligence},
-	year = {2018},
-	keywords = {Computer Vision; Semi-Supervised Learning},
-	url = {https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16270}
+    @inproceedings{bartz2018see,
+        title={SEE: towards semi-supervised end-to-end scene text recognition},
+        author={Bartz, Christian and Yang, Haojin and Meinel, Christoph},
+        booktitle={Thirty-Second AAAI Conference on Artificial Intelligence},
+        year={2018}
     }
 
 
